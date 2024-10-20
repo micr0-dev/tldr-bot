@@ -69,8 +69,14 @@ func main() {
 		switch e := event.(type) {
 		case *mastodon.NotificationEvent:
 			if e.Notification.Type == "mention" {
+				if e.Notification.Account.Bot {
+					break
+				}
 				handleMention(c, e.Notification)
 			} else if e.Notification.Type == "follow" {
+				if e.Notification.Account.Bot {
+					break
+				}
 				handleFollowBack(c, e.Notification.Account.ID)
 			}
 		case *mastodon.UpdateEvent:
