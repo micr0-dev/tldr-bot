@@ -123,7 +123,7 @@ func handleMention(c *mastodon.Client, notification *mastodon.Notification) {
 	summary, err := summarizeThread(thread)
 	if err != nil {
 		log.Printf("Error summarizing thread: %v", err)
-		summary = "uh oh, something went wrong. can't summarize this thread. try again later?"
+		summary = "uh oh, something went wrong. can't summarize this thread.\n" + err.Error()
 	}
 
 	summary = cleanResponse(summary)
