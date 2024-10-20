@@ -73,6 +73,9 @@ func main() {
 				handleFollowBack(c, e.Notification.Account.ID)
 			}
 		case *mastodon.UpdateEvent:
+			if e.Status.Account.Bot {
+				break
+			}
 			checkForLongPost(c, e.Status)
 		}
 	}
