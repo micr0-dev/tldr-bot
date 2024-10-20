@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -171,11 +172,23 @@ func checkForLongPost(c *mastodon.Client, status *mastodon.Status) {
 }
 
 func cleanResponse(response string) string {
-	response = strings.ReplaceAll(response, "tl;dr:", "")
-	response = strings.ReplaceAll(response, "TL;DR:", "")
+	// Compile a regex to match common TL;DR patterns (case-insensitive)
+	tldrRegex := regexp.MustCompile(`(?i)(^|\s)?tl;dr[:\-\s]*`)
+
+	// Remove any redundant TL;DR prefixes or headings
+	response = tldrRegex.ReplaceAllString(response, "")
+
+	// Remove markdown-style headers (e.g., ## Heading)
+	headerRegex := regexp.MustCompile(`(?m)^#+\s*.*\n?`)
+	response = headerRegex.ReplaceAllString(response, "")
+
+	// Clean up any double spaces or unnecessary punctuation spacing
 	response = strings.ReplaceAll(response, ".  ", ". ")
 	response = strings.ReplaceAll(response, ",  ", ", ")
+
+	// Trim leading and trailing spaces
 	response = strings.TrimSpace(response)
+
 	return response
 }
 
@@ -227,7 +240,7 @@ func extractTextFromHTML(content string) string {
 
 // summarizeThread uses the AI model to summarize the thread
 func summarizeThread(thread string) (string, error) {
-	prompt := fmt.Sprintf("Write a TL;DR summary for this conversation:\n%s", thread)
+	prompt := fmt.Sprintf("Write a TL;DR summary for this conversation. Reply with just the TL;DR and nothing else:\n%s", thread)
 
 	switch config.LLM.Provider {
 	case "gemini":
