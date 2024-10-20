@@ -143,7 +143,7 @@ func checkForLongPost(c *mastodon.Client, status *mastodon.Status) {
 	content := extractTextFromHTML(status.Content)
 	wordCount := countWords(content)
 
-	if wordCount > 300 && !strings.Contains(strings.ToLower(content), "tl;dr") {
+	if wordCount > 100 && !strings.Contains(strings.ToLower(content), "tl;dr") {
 		summary, err := summarizeThread(content)
 		if err != nil {
 			log.Printf("Error generating TL;DR: %v", err)
