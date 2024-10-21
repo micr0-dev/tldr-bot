@@ -120,7 +120,7 @@ func handleMention(c *mastodon.Client, notification *mastodon.Notification) {
 		return
 	}
 
-	summary, err := summarizeThread(thread)
+	summary, err := summarizeThread(thread, false)
 	if err != nil {
 		log.Printf("Error summarizing thread: %v", err)
 		summary = "uh oh, something went wrong. can't summarize this thread.\n" + err.Error()
@@ -154,7 +154,7 @@ func checkForLongPost(c *mastodon.Client, status *mastodon.Status) {
 	wordCount := countWords(content)
 
 	if wordCount > 100 && !strings.Contains(strings.ToLower(content), "tl;dr") {
-		summary, err := summarizeThread(content)
+		summary, err := summarizeThread(content, true)
 		if err != nil {
 			log.Printf("Error generating TL;DR: %v", err)
 			return
@@ -245,9 +245,13 @@ func extractTextFromHTML(content string) string {
 }
 
 // summarizeThread uses the AI model to summarize the thread
-func summarizeThread(thread string) (string, error) {
-	prompt := fmt.Sprintf("Write a TL;DR summary for this conversation. Reply with just the TL;DR and nothing else:\n%s", thread)
-
+func summarizeThread(thread string, isSinglePost bool) (string, error) {
+	var prompt string
+	if !isSinglePost {
+		prompt = fmt.Sprintf("Write a TL;DR summary for this conversation. Reply with just the TL;DR and nothing else:\n%s", thread)
+	} else {
+		prompt = fmt.Sprintf("Write a TL;DR summary for this post. Refer to the Original poster as OP. Reply with just the TL;DR and nothing else:\n%s", thread)
+	}
 	switch config.LLM.Provider {
 	case "gemini":
 		return generateWithGemini(prompt)
