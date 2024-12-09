@@ -135,11 +135,17 @@ func handleMention(c *mastodon.Client, notification *mastodon.Notification) {
 		visibility = "unlisted"
 	}
 
+	// Prepare the content warning for the reply
+	contentWarning := notification.Status.SpoilerText
+	if contentWarning != "" && !strings.HasPrefix(contentWarning, "re:") {
+		contentWarning = "re: " + contentWarning
+	}
+
 	_, err = c.PostStatus(ctx, &mastodon.Toot{
 		Status:      response,
 		InReplyToID: notification.Status.ID,
 		Visibility:  visibility,
-		SpoilerText: notification.Status.SpoilerText,
+		SpoilerText: contentWarning,
 	})
 	if err != nil {
 		log.Printf("Error posting summary: %v", err)
@@ -153,7 +159,7 @@ func checkForLongPost(c *mastodon.Client, status *mastodon.Status) {
 	content := extractTextFromHTML(status.Content)
 	wordCount := countWords(content)
 
-	if wordCount > 100 && !strings.Contains(strings.ToLower(content), "tl;dr") {
+	if wordCount > 200 && !strings.Contains(strings.ToLower(content), "tl;dr") {
 		summary, err := summarizeThread(content, true)
 		if err != nil {
 			log.Printf("Error generating TL;DR: %v", err)
@@ -164,10 +170,17 @@ func checkForLongPost(c *mastodon.Client, status *mastodon.Status) {
 
 		response := fmt.Sprintf("@%s TL;DR: %s", status.Account.Acct, summary)
 
+		// Prepare the content warning for the reply
+		contentWarning := status.SpoilerText
+		if contentWarning != "" && !strings.HasPrefix(contentWarning, "re:") {
+			contentWarning = "re: " + contentWarning
+		}
+
 		_, err = c.PostStatus(ctx, &mastodon.Toot{
 			Status:      response,
 			InReplyToID: status.ID,
 			Visibility:  status.Visibility,
+			SpoilerText: contentWarning,
 		})
 		if err != nil {
 			log.Printf("Error posting TL;DR: %v", err)
